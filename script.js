@@ -76,9 +76,9 @@ const displayMovements = function(movements) {
     });
 }
 
-const calcDisplayBalance = function(movements) {
-    const balance = movements.reduce((acc, mov) => acc + mov, 0)
-    labelBalance.textContent = `${balance}€`;
+const calcDisplayBalance = function(acc) {
+    acc.balance = acc.movements.reduce((acc, mov) => acc + mov, 0)
+    labelBalance.textContent = `${acc.balance}€`;
 }
 
 
@@ -115,6 +115,17 @@ const createUsernames = function(accs) {
 
 createUsernames(accounts);
 
+const updateUI = function(acc) {
+    // display movements
+    displayMovements(acc.movements);
+
+    // display balance
+    calcDisplayBalance(acc);
+    
+    // display summary 
+    calcDisplaySummary(acc);
+}
+
 // Event handlers
 let currentAccount;
 
@@ -130,37 +141,31 @@ btnLogin.addEventListener('click', function(e) {
         // clear the inputs
         inputLoginUsername.value = inputLoginPin.value = '';
         inputLoginPin.blur();
-        // display movements
-        displayMovements(currentAccount.movements);
 
-        // display balance
-        calcDisplayBalance(currentAccount.movements);
-        
-        // display summary 
-        calcDisplaySummary(currentAccount);
+        // update UI
+        updateUI(currentAccount);
     }
 });
 
-/////////////////////////////////////////////////
-/////////////////////////////////////////////////
-// LECTURES
+btnTransfer.addEventListener('click', function(e) {
+    e.preventDefault();
 
-const currencies = new Map([
-  ['USD', 'United States dollar'],
-  ['EUR', 'Euro'],
-  ['GBP', 'Pound sterling'],
-]);
+    const amount = Number(inputTransferAmount.value);
+    const recieverAcc = accounts.find(acc => acc.username === inputTransferTo.value);
 
-const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
+    // clear the inputs
+    inputTransferAmount.value = inputTransferTo.value = '';
+    
+    if(
+        amount > 0 && 
+        recieverAcc && 
+        currentAccount.balance >= amount && 
+        recieverAcc?.username !== currentAccount.username) {
+            // transfer
+            currentAccount.movements.push(-amount);
+            recieverAcc.movements.push(amount);
 
-/////////////////////////////////////////////////
-
-const eurToUsd = 1.1;
-const moventsUSD = movements.map((mov) => mov * eurToUsd);
-const movementsDescriptions = movements.map((mov, i, arr) => 
-    `Movement ${i + 1}: You ${mov > 0 ? 'deposited' : 'withdraw'} ${Math.abs(mov)}`
-);
-
-// max value
-// const max = movements.reduce((acc, mov) => acc > mov ? acc : mov, movements[0]);
-// console.log(max);
+            // update UI
+            updateUI(currentAccount);
+    }
+});
